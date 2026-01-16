@@ -9,3 +9,4 @@ numpy
 ragas
 datasets
 python-dotenv
+google-genai

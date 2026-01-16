@@ -1,11 +1,4 @@
-"""
-app.py
-RAG + Gemini (Google GenAI) example using:
- - sentence-transformers (all-MiniLM-L6-v2)
- - faiss (IndexFlatIP with L2-normalized vectors for cosine similarity)
- - google-genai SDK (client.models.generate_content)
-Requires: Python 3.9+
-"""
+
 
 import os
 import json
