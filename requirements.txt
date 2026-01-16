@@ -1,0 +1,11 @@
+flask
+flask-cors
+sentence-transformers
+faiss-cpu
+rank-bm25
+PyPDF2
+requests
+numpy
+ragas
+datasets
+python-dotenv

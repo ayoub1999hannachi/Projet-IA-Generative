@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>University IT Assistant - RAG System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .badge {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            margin-top: 10px;
+        }
+
+        .chat-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            height: 600px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .message {
+            margin-bottom: 20px;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.user {
+            text-align: right;
+        }
+
+        .message-content {
+            display: inline-block;
+            max-width: 70%;
+            padding: 15px 20px;
+            border-radius: 15px;
+            word-wrap: break-word;
+        }
+
+        .message.user .message-content {
+            background: #667eea;
+            color: white;
+            border-bottom-right-radius: 5px;
+        }
+
+        .message.assistant .message-content {
+            background: #f0f0f0;
+            color: #333;
+            border-bottom-left-radius: 5px;
+            text-align: left;
+        }
+
+        .message.error .message-content {
+            background: #fff3cd;
+            color: #856404;
+            border-left: 4px solid #ffc107;
+        }
+
+        .contexts {
+            margin-top: 15px;
+            padding: 10px;
+            background: #e8f4f8;
+            border-radius: 10px;
+            font-size: 0.9em;
+        }
+
+        .context-item {
+            margin: 8px 0;
+            padding: 8px;
+            background: white;
+            border-radius: 5px;
+            border-left: 3px solid #667eea;
+        }
+
+        .input-area {
+            padding: 20px;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            gap: 10px;
+        }
+
+        input {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 25px;
+            font-size: 1em;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            border-color: #667eea;
+        }
+
+        button {
+            padding: 15px 30px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #5568d3;
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .examples {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            margin-top: 20px;
+        }
+
+        .examples h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        .example-btn {
+            display: inline-block;
+            padding: 8px 15px;
+            margin: 5px;
+            background: #f0f0f0;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: background 0.3s;
+            font-size: 0.9em;
+        }
+
+        .example-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .status {
+            padding: 10px;
+            text-align: center;
+            font-size: 0.9em;
+            color: #fff;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎓 University IT Assistant</h1>
+            <p class="subtitle">Retrieval-Augmented Generation System</p>
+            <span class="badge">RAG Architecture: FAISS + Gemini 1.5</span>
+        </div>
+
+        <div class="chat-container">
+            <div class="messages" id="messages">
+                <div class="message assistant">
+                    <div class="message-content">
+                        <strong>Hello! 👋</strong><br><br>
+                        I'm your RAG-powered IT assistant. I can answer questions about:
+                        <br>• Algorithms & Data Structures
+                        <br>• Machine Learning & AI
+                        <br>• Databases & SQL
+                        <br>• Networking & Security
+                        <br>• Software Engineering
+                        <br>• Programming Concepts
+                        <br><br>
+                        <em>Note: I can only answer questions from my knowledge base. Questions outside IT topics will be politely declined.</em>
+                    </div>
+                </div>
+            </div>
+
+            <div class="input-area">
+                <input 
+                    type="text" 
+                    id="questionInput" 
+                    placeholder="Ask me about algorithms, AI, databases, networking..."
+                    onkeypress="handleKeyPress(event)"
+                />
+                <button id="sendBtn" onclick="sendQuestion()">Send</button>
+            </div>
+        </div>
+
+        <div class="examples">
+            <h3>📝 Try these example questions:</h3>
+            <div class="example-btn" onclick="askExample('What is a binary search tree?')">Binary Search Tree</div>
+            <div class="example-btn" onclick="askExample('Explain machine learning')">Machine Learning</div>
+            <div class="example-btn" onclick="askExample('What is SQL JOIN?')">SQL JOIN</div>
+            <div class="example-btn" onclick="askExample('Explain neural networks')">Neural Networks</div>
+            <div class="example-btn" onclick="askExample('What is TCP/IP?')">TCP/IP</div>
+            <div class="example-btn" onclick="askExample('Explain DBMS')">DBMS</div>
+        </div>
+
+        <div class="status" id="status"></div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:5000/ask';
+        
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendQuestion();
+            }
+        }
+
+        function askExample(question) {
+            document.getElementById('questionInput').value = question;
+            sendQuestion();
+        }
+
+        async function sendQuestion() {
+            const input = document.getElementById('questionInput');
+            const sendBtn = document.getElementById('sendBtn');
+            const question = input.value.trim();
+            
+            if (!question) return;
+            
+            // Add user message
+            addMessage(question, 'user');
+            input.value = '';
+            
+            // Disable input
+            sendBtn.disabled = true;
+            sendBtn.innerHTML = '<span class="loading"></span>';
+            
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ question })
+                });
+                
+                const data = await response.json();
+                
+                // Add assistant message
+                addMessage(
+                    data.answer, 
+                    data.is_relevant ? 'assistant' : 'error',
+                    data.contexts
+                );
+                
+            } catch (error) {
+                addMessage(
+                    'Error: Could not connect to the server. Make sure the Flask app is running on port 5000.',
+                    'error'
+                );
+            }
+            
+            // Re-enable input
+            sendBtn.disabled = false;
+            sendBtn.textContent = 'Send';
+        }
+
+        function addMessage(text, type, contexts = []) {
+            const messagesDiv = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            
+            let contextHtml = '';
+            if (contexts && contexts.length > 0) {
+                contextHtml = '<div class="contexts"><strong>📚 Retrieved Sources:</strong>';
+                contexts.forEach((ctx, i) => {
+                    contextHtml += `
+                        <div class="context-item">
+                            <strong>Source ${i + 1}:</strong> ${ctx.topic} 
+                            <span style="color: #667eea;">(${ctx.similarity} match)</span>
+                        </div>
+                    `;
+                });
+                contextHtml += '</div>';
+            }
+            
+            messageDiv.innerHTML = `
+                <div class="message-content">
+                    ${text}
+                    ${contextHtml}
+                </div>
+            `;
+            
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        // Check server status on load
+        fetch('http://localhost:5000/debug')
+            .then(r => r.json())
+            .then(data => {
+                document.getElementById('status').innerHTML = 
+                    `✅ Connected to RAG System | ${data.knowledge_entries} knowledge entries loaded`;
+            })
+            .catch(() => {
+                document.getElementById('status').innerHTML = 
+                    '❌ Server not connected. Please start the Flask app.';
+            });
+    </script>
+</body>
+</html>
